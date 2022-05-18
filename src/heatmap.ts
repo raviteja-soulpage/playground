@@ -150,6 +150,7 @@ export class HeatMap {
   }
 
   updateBackground(data: number[][], discretize: boolean): void {
+    console.log(data, "=============================")
     let dx = data[0].length;
     let dy = data.length;
 

@@ -57,20 +57,21 @@ enum HoverType {
   BIAS, WEIGHT
 }
 
+
+function list_objects(fruits: string[]): any {
+
+  return fruits.reduce(function(obj, x) {
+
+    obj[x] = {f: (x, obj) => x, label: `${x}_1`};
+      return obj;
+  }, {});
+  }
+  
 interface InputFeature {
-  f: (x: number, y: number) => number;
+  f: (x: any, y: any) => any;
   label?: string;
 }
-
-let INPUTS: {[name: string]: InputFeature} = {
-  "x": {f: (x, y) => x, label: "X_1"},
-  "y": {f: (x, y) => y, label: "X_2"},
-  "xSquared": {f: (x, y) => x * x, label: "X_1^2"},
-  "ySquared": {f: (x, y) => y * y,  label: "X_2^2"},
-  "xTimesY": {f: (x, y) => x * y, label: "X_1X_2"},
-  "sinX": {f: (x, y) => Math.sin(x), label: "sin(X_1)"},
-  "sinY": {f: (x, y) => Math.sin(y), label: "sin(X_2)"},
-};
+let INPUTS: {[name: string]: InputFeature} = list_objects(["x", 'Orange', 'Banana',"Show test data", "showTestData","Play button", "playButton"]);
 
 let HIDABLE_CONTROLS = [
   ["Show test data", "showTestData"],
@@ -847,8 +848,17 @@ function getLoss(network: nn.Node[][], dataPoints: Example2D[]): number {
   }
   return loss / dataPoints.length;
 }
+function tableright(boundary, selectedId){
+  
+  let th = d3.select(".testdata thead").selectAll("tr").data([boundary[selectedId][0]]).enter().append("tr")
+  th.selectAll("th").data((d, i)=>{ return Object.keys(d)}).enter().append("th").text(d=>{return d})
 
+  let tr = d3.select(".testdata tbody").selectAll("tr").data(boundary[selectedId]).enter().append("tr")
+  tr.selectAll("td").data((d, i)=>{ return Object.keys(d).map(e=>d[e]) }).enter().append("td").text(d=>{return d})
+  
+}
 function updateUI(firstStep = false) {
+  
   // Update the links visually.
   updateWeightsUI(network, d3.select("g.core"));
   // Update the bias values visually.
@@ -857,8 +867,11 @@ function updateUI(firstStep = false) {
   updateDecisionBoundary(network, firstStep);
   let selectedId = selectedNodeId != null ?
       selectedNodeId : nn.getOutputNode(network).id;
+  console.log(boundary, selectedId, "////////////////////////////////")
+  tableright(boundary, selectedId)
+  
   heatMap.updateBackground(boundary[selectedId], state.discretize);
-
+  
   // Update all decision boundaries.
   d3.select("#network").selectAll("div.canvas")
       .each(function(data: {heatmap: HeatMap, id: string}) {
@@ -868,14 +881,17 @@ function updateUI(firstStep = false) {
 
   function zeroPad(n: number): string {
     let pad = "000000";
+    console.log((pad + n).slice(-pad.length), "timer")
     return (pad + n).slice(-pad.length);
   }
 
   function addCommas(s: string): string {
+    console.log(s, "s")
     return s.replace(/\B(?=(\d{3})+(?!\d))/g, ",");
   }
 
   function humanReadable(n: number): string {
+    console.log(n, "n")
     return n.toFixed(3);
   }
 
@@ -1077,14 +1093,24 @@ function generateData(firstTime = false) {
   let generator = state.problem === Problem.CLASSIFICATION ?
       state.dataset : state.regDataset;
   let data = generator(numSamples, state.noise / 100);
+  
   // Shuffle the data in-place.
   shuffle(data);
   // Split into train and test data.
   let splitIndex = Math.floor(data.length * state.percTrainData / 100);
   trainData = data.slice(0, splitIndex);
+  console.log(trainData, "traindata --------------------------------")
   testData = data.slice(splitIndex);
+
+  let th = d3.select(".output_table thead").selectAll("tr").data([trainData[0]]).enter().append("tr")
+  th.selectAll("th").data((d, i)=>{ return Object.keys(d)}).enter().append("th").text(d=>{return d})
+
+  let tr = d3.select(".output_table tbody").selectAll("tr").data(trainData).enter().append("tr")
+  tr.selectAll("td").data((d, i)=>{ return Object.keys(d).map(e=>d[e]) }).enter().append("td").text(d=>{return d})
+  
   heatMap.updatePoints(trainData);
   heatMap.updateTestPoints(state.showTestData ? testData : []);
+  
 }
 
 let firstInteraction = true;
